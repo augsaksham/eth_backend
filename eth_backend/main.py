@@ -19,7 +19,7 @@ def check_update_permission():
     
 def upload_file(filename,issuer_id="None"):
     
-    file_hash = pinata.pin_file_to_ipfs(filename)
+    file_hash = pinata.pin_file_to_ipfs('files/'+filename)
     pinata.pin_jobs()
     dict_hashes[filename]=file_hash
     print("Uploaded File")

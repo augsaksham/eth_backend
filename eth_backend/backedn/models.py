@@ -1,4 +1,5 @@
 from django.db import models
+import jsonfield
 
 # Create your models here.
 
@@ -11,8 +12,19 @@ class Doctor(models.Model):
     
     
 class Patient(models.Model):
+    
     patient_id=models.CharField(max_length=50,primary_key=True,default="None")
     patient_name=models.CharField(max_length=100)
     patient_adhaar=models.CharField(max_length=15)
     patient_wallet=models.CharField(max_length=50)
     issue_center=models.CharField(max_length=50)
+
+
+class Records(models.Model):
+    record_id=models.CharField(max_length=100,primary_key=True)
+    records=jsonfield.JSONField()
+    
+class File(models.Model):
+    file_id=models.CharField(max_length=100,primary_key=True)
+    file_hash=models.CharField(max_length=100)
+    
