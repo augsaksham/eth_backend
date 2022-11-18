@@ -26,9 +26,8 @@ def upload_file(filename,issuer_id="None"):
     return file_hash
 
 
-def get_file(filename,patient_adhaar="None",issuer_id="None"):
-    result=get_file_hash(filename)
-    return requests.get(url=gateway+result['IpfsHash']).text
+def get_file(file_hash,patient_adhaar="None",issuer_id="None"):
+    return requests.get(url=gateway+file_hash).text
 
 
 def update_file(filename,patient_adhaar="None",issuer_id="None"):
@@ -40,5 +39,5 @@ def update_file(filename,patient_adhaar="None",issuer_id="None"):
         print("Bad Request (Permission Not Granted)")
         return False
 
-upload_file("sample2.json")
-print(get_file("sample2.json"))
+# upload_file("sample2.json")
+# print(get_file("sample2.json"))
