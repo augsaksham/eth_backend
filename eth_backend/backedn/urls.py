@@ -8,9 +8,13 @@ urlpatterns = [
     path('newpatient/',csrf_exempt(views.add_patient)),
     path('permission/',csrf_exempt(views.get_permission)),
     path('update/',csrf_exempt(views.update_record)),
-    path('signindoc/',csrf_exempt(views.sign_in_doc)),
-    path('signinpatient/',csrf_exempt(views.sign_in_patient)),
     path('addrecord/',csrf_exempt(views.add_record)),
     path('emergency/',csrf_exempt(views.emergency)),
+    path('check_sign_in/',csrf_exempt(views.check_sign_in)),
+    path('sign_in/',csrf_exempt(views.sign_in)),
+    path('add_doc/',csrf_exempt(views.add_doctor_to_patient)),
+    path('get_permission/',csrf_exempt(views.get_permission)),
+    path('get_file/',csrf_exempt(views.get_file)),
+    path('get_all_file/',csrf_exempt(views.acess_all_records)),
 
 ]

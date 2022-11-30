@@ -38,4 +38,8 @@ class Permissions(models.Model):
     id=models.CharField(max_length=100,primary_key=True,default="None")
     premission_type=models.CharField(max_length=5)
     
+class Login(models.Model):
+    id=models.CharField(max_length=100,primary_key=True,default="None")
+    status=models.CharField(max_length=5)
+    
     

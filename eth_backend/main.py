@@ -39,5 +39,6 @@ def update_file(filename,patient_adhaar="None",issuer_id="None"):
         print("Bad Request (Permission Not Granted)")
         return False
 
-# upload_file("sample2.json")
-# print(get_file("sample2.json"))
+# hash=upload_file("16354805476065014430739088712126125910.json")
+
+# print(get_file(hash["IpfsHash"]))
