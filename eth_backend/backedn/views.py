@@ -11,6 +11,7 @@ def index(request):
 
 
 def handel_file(json_object,id=0):
+    #Tested 
     if id==0:
         id=str(uuid.uuid1().int)
         with open("files/"+id, "w") as outfile:
@@ -21,25 +22,38 @@ def handel_file(json_object,id=0):
     return id
 
 def add_patient(request):
+    #Tested
     data = json.loads(request.body.decode("utf-8"))
-    id=str(uuid.uuid1().int)
-    patient=Patient(id,data['patient_name'],data['patient_adhaar']
-                  ,data['patient_wallet'],data['issue_center'])
-    patient.save()
+    
+    try:
+        patient=Patient(data['patient_adhaar'],data['patient_name'],data['patient_adhaar']
+                    ,data['patient_wallet'],data['issue_center'])
+        patient.save()
+    except :
+        print("Patient Allready Exists")
+        return JsonResponse('Patient Allready Exists'+data['patient_name'], status=201,safe=False)
     file=data['file']
     json_object = json.dumps(file)
     file_id=handel_file(json_object)
-    file_hash=mn.upload_file(file_id,data['issue_center'])
+    file_hash=mn.upload_file(file_id,data['issue_center'])['IpfsHash']
+    print("File Hash = ",file_hash)
     fle=File(file_id,file_hash)
     fle.save()
     
-    return JsonResponse('Patient Created ID  = '+id, status=201,safe=False)
+    return JsonResponse('Patient Created ID  = '+data['patient_name'], status=201,safe=False)
 
 def add_doctor(request):
+    #Tested
     data = json.loads(request.body.decode("utf-8"))
     doctor=Doctor(data['doc_id'],data['doc_name'],data['doc_adhaar']
                   ,data['doc_wallet'],data['issue_center'])
-    doctor.save()
+    try:
+        doctor.save()
+        print("Saved doctor")
+    except:
+        print("Doc allready Exists ")
+        JsonResponse("Doc allready Exists ", status=201,safe=False)
+        
     return JsonResponse('True', status=201,safe=False)
 
 def update_record(request):
