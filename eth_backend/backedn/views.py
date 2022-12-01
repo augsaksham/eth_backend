@@ -1,13 +1,15 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.http import JsonResponse
-from .models import Doctor,Patient,Records,File,PatientDoctors,Permissions,Login
+from .models import Doctor,Patient,Records,File,PatientDoctors,Permissions,Login,Emergency,Mobile,Otp
 import main as mn
+import get_otp
 import uuid  
 import requests
 import json
 import urllib.parse
 # Create your views here.
+
 def index(request):
     return HttpResponse("Hello World")
 
@@ -37,11 +39,13 @@ def add_patient(request):
         return JsonResponse('Patient Allready Exists'+data['patient_name'], status=201,safe=False)
     file=data['file']
     json_object = json.dumps(file)
-    file_id=handel_file(json_object)
+    file_id=handel_file(json_object,"basic_record")
     file_hash=mn.upload_file(file_id,data['issue_center'])['IpfsHash']
     print("File Hash = ",file_hash)
     fle=File(file_id,file_hash)
     fle.save()
+    mob=Mobile(data['patient_adhaar'],data['patient_name'],data['number'])
+    mob.save()
     
     return JsonResponse('Patient Created ID  = '+data['patient_name'], status=201,safe=False)
 
@@ -56,7 +60,8 @@ def add_doctor(request):
     except:
         print("Doc allready Exists ")
         JsonResponse("Doc allready Exists ", status=201,safe=False)
-        
+    mob=Mobile(data['doc_id'],data['doc_name'],data['number'])
+    mob.save()    
     return JsonResponse('True', status=201,safe=False)
 
 def update_record(request):
@@ -106,6 +111,7 @@ def get_file(request,request_stat=0):
             return "Error"   
 
 def is_file_of_correct_doc(doc_id,file_id,patient_id):
+    #Tested
     rec=Records.objects.filter(record_id=patient_id+':'+doc_id).values()
     if rec.exists():
         rec=rec[0]["records"]
@@ -117,7 +123,32 @@ def is_file_of_correct_doc(doc_id,file_id,patient_id):
     print("File not of doctor ")
     return False
 
+def generate_otp(request):
+    data = json.loads(request.body.decode("utf-8"))
+    id=data["patient_id"]
+    rec=Mobile.objects.filter(id=id).values()[0]
+    rec=Otp(id,get_otp.get_otp(rec))
+    rec.save()
+    return JsonResponse("Otp Sent", status=201,safe=False)
 
+def verify_otp(request):
+    
+    data = json.loads(request.body.decode("utf-8"))
+    id=data["patient_id"]
+    input_otp=data["otp"]
+    correct_otp=Mobile.objects.filter(id=id).values()[0]['otp']
+    if (correct_otp==input_otp):
+        rec=Otp(id=id)
+        rec.delete()
+        return JsonResponse("True", status=201,safe=False)
+    else :
+        return JsonResponse("False", status=201,safe=False)
+
+        
+    
+    
+    
+    
 def get_permission(request):
     #Tested
     data = json.loads(request.body.decode("utf-8"))
@@ -135,14 +166,19 @@ def get_permission(request):
         rec.save()
         return JsonResponse('Added Permission', status=201,safe=False)
 
-def acess_all_records(request):
+def acess_all_records(request,admin=0):
     #Tested
-    data = json.loads(request.body.decode("utf-8"))
+    data={}
+    if admin==0:
+        data = json.loads(request.body.decode("utf-8"))
+    else :
+        data=request
+        
     patient_id=data["patient_id"]
     doc_id=data["doc_id"]
     result={}
     rec=Permissions.objects.filter(id=patient_id+':'+doc_id).values()
-    if rec.exists():
+    if admin==1 or rec.exists():
         print("Found Permission")
         doc_ids=PatientDoctors.objects.filter(patient_id=patient_id).values()[0]['doctors'].split(':')
         for doc in doc_ids:
@@ -175,9 +211,16 @@ def acess_all_records(request):
                         result[fl]=json_response['file']
         rec=Permissions(patient_id+":"+doc)
         rec.delete()
-        return JsonResponse({"Files":result}, status=201,safe=False)
+        
+        if admin==0:
+            return JsonResponse({"Files":result}, status=201,safe=False)
+        else :
+            return result
     else:
-        return JsonResponse('Permission not granted', status=201,safe=False)
+        if admin==0:
+            return JsonResponse({"Files":'Permission not granted'}, status=201,safe=False)
+        else :
+            return "Permission Not Granted"
     
 
 def sign_in(request):
@@ -244,6 +287,7 @@ def add_record(request):
     if doc_record.exists():
         print("Doctor Previously Added Addind Record")
         json_object = json.dumps(file)
+        print("Json Object = ",json_object)
         file_id=handel_file(json_object)
         file_hash=mn.upload_file(file_id,data['issue_center'])['IpfsHash']
         record=Records.objects.filter(record_id=record_id).values()
@@ -265,4 +309,17 @@ def add_record(request):
     return JsonResponse('True', status=201,safe=False)
 
 def emergency(request):
-    pass
+    data = json.loads(request.body.decode("utf-8"))
+    patient_id=data["patient_id"]
+    doc_id=data["doc_id"]
+    id=patient_id+":"+doc_id
+    date=data["date"]
+    rec=Emergency(id,date)
+    rec.save()
+    rec=Permissions(patient_id+':'+doc_id,"rec")
+    rec.save()
+    req={}
+    req["patient_id"]=data["patient_id"]
+    req["doc_id"]=data["doc_id"]
+    return JsonResponse({"Files":acess_all_records(req,admin=1)}, status=201,safe=False)
+    

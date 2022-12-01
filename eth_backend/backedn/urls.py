@@ -16,5 +16,7 @@ urlpatterns = [
     path('get_permission/',csrf_exempt(views.get_permission)),
     path('get_file/',csrf_exempt(views.get_file)),
     path('get_all_file/',csrf_exempt(views.acess_all_records)),
+    path('generate_otp',csrf_exempt(views.generate_otp)),
+    path('verify_otp',csrf_exempt(views.verify_otp)),
 
 ]

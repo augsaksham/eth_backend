@@ -42,4 +42,17 @@ class Login(models.Model):
     id=models.CharField(max_length=100,primary_key=True,default="None")
     status=models.CharField(max_length=5)
     
+class Emergency(models.Model):
+    id=models.CharField(max_length=100,primary_key=True,default="None")
+    date=models.CharField(max_length=15)
+    
+    
+class Mobile(models.Model):
+    id=models.CharField(max_length=50,primary_key=True,default="None")
+    name=models.CharField(max_length=50)
+    number=models.CharField(max_length=15)
+    
+class Otp(models.Model):
+    id=models.CharField(max_length=50,primary_key=True,default="None")
+    otp=models.CharField(max_length=10)
     
