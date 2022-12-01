@@ -14,6 +14,7 @@ def index(request):
     return HttpResponse("Hello World")
 
 
+
 def handel_file(json_object,id=0):
     #Tested 
     if id==0:
@@ -39,7 +40,7 @@ def add_patient(request):
         return JsonResponse('Patient Allready Exists'+data['patient_name'], status=201,safe=False)
     file=data['file']
     json_object = json.dumps(file)
-    file_id=handel_file(json_object,"basic_record")
+    file_id=handel_file(json_object,"basic_record"+data["patient_adhaar"])
     file_hash=mn.upload_file(file_id,data['issue_center'])['IpfsHash']
     print("File Hash = ",file_hash)
     fle=File(file_id,file_hash)
@@ -63,6 +64,12 @@ def add_doctor(request):
     mob=Mobile(data['doc_id'],data['doc_name'],data['number'])
     mob.save()    
     return JsonResponse('True', status=201,safe=False)
+
+def give_file(file_hash):
+    f = open('files/'+file_hash+'.json')
+    data = json.load(f)
+    return data
+
 
 def update_record(request):
     data = json.loads(request.body.decode("utf-8"))
@@ -96,7 +103,8 @@ def get_file(request,request_stat=0):
     if(request_stat>=1 or is_file_of_correct_doc(doc_id,file_id,patient_id)):
         file_hash=File.objects.filter(file_id=file_id).values()[0]["file_hash"]
         print("Requested hash = ",file_hash)
-        file=mn.get_file(file_hash)    
+        # file=mn.get_file(file_hash)    
+        file=give_file(file_id)
         print("Got file as ",file)
         if request_stat==0:
             return JsonResponse({"file":file}, status=201,safe=False)
@@ -124,6 +132,7 @@ def is_file_of_correct_doc(doc_id,file_id,patient_id):
     return False
 
 def generate_otp(request):
+    #Tested
     data = json.loads(request.body.decode("utf-8"))
     id=data["patient_id"]
     rec=Mobile.objects.filter(id=id).values()[0]
@@ -132,11 +141,11 @@ def generate_otp(request):
     return JsonResponse("Otp Sent", status=201,safe=False)
 
 def verify_otp(request):
-    
+    #Tested
     data = json.loads(request.body.decode("utf-8"))
     id=data["patient_id"]
     input_otp=data["otp"]
-    correct_otp=Mobile.objects.filter(id=id).values()[0]['otp']
+    correct_otp=Otp.objects.filter(id=id).values()[0]['otp']
     if (correct_otp==input_otp):
         rec=Otp(id=id)
         rec.delete()
@@ -144,11 +153,6 @@ def verify_otp(request):
     else :
         return JsonResponse("False", status=201,safe=False)
 
-        
-    
-    
-    
-    
 def get_permission(request):
     #Tested
     data = json.loads(request.body.decode("utf-8"))
@@ -202,13 +206,14 @@ def acess_all_records(request,admin=0):
                         
                         print("Request is ",req)
                         json_response = get_file(req,2)
+                        print("Got Response as ",json_response)
                     except:
                         print("Error in extracting file id : ",fl)
                         continue
-                    if not(json_response=="Error"):
+                    if (json_response=="Error"):
                         continue        
                     else:
-                        result[fl]=json_response['file']
+                        result[fl]=json_response
         rec=Permissions(patient_id+":"+doc)
         rec.delete()
         
@@ -309,17 +314,35 @@ def add_record(request):
     return JsonResponse('True', status=201,safe=False)
 
 def emergency(request):
+    #Can be used for 2 purpose use doc_id==patient_id to acess all records of patient without logging the acess
     data = json.loads(request.body.decode("utf-8"))
     patient_id=data["patient_id"]
     doc_id=data["doc_id"]
     id=patient_id+":"+doc_id
-    date=data["date"]
-    rec=Emergency(id,date)
-    rec.save()
-    rec=Permissions(patient_id+':'+doc_id,"rec")
-    rec.save()
     req={}
     req["patient_id"]=data["patient_id"]
     req["doc_id"]=data["doc_id"]
+    try:
+        rec=Permissions(patient_id+':'+doc_id,"rec")
+        rec.save()
+    except:
+        pass
+    if not(patient_id==doc_id) :#check is patient is trying to acess his information
+        try:
+            date=data["date"]
+            rec=Emergency(id,date)
+            rec.save()
+        except:
+            rec=Emergency(id=id)
+            rec.delete()
+            date=data["date"]
+            rec=Emergency(id,date)
+            rec.save()
+    else:
+        print("Patient Acessing his information")
+        pass
     return JsonResponse({"Files":acess_all_records(req,admin=1)}, status=201,safe=False)
     
+def get_basic_record(request):
+    data = json.loads(request.body.decode("utf-8"))
+    return JsonResponse({"File":give_file("basic_record"+data['patient_id'])}, status=201,safe=False)

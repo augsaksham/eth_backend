@@ -19,7 +19,7 @@ def check_update_permission():
     
 def upload_file(filename,issuer_id="None"):
     
-    file_hash = pinata.pin_file_to_ipfs(filename)
+    file_hash = pinata.pin_file_to_ipfs('files/'+filename)
     pinata.pin_jobs()
     dict_hashes[filename]=file_hash
     print("Uploaded File")
@@ -39,6 +39,6 @@ def update_file(filename,patient_adhaar="None",issuer_id="None"):
         print("Bad Request (Permission Not Granted)")
         return False
 
-hash=upload_file("sample2.json")
+# hash=upload_file("sample2.json")
 
-print(get_file(hash["IpfsHash"]))
+# print(get_file(hash["IpfsHash"]))

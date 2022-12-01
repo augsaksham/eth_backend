@@ -11,7 +11,7 @@ def get_otp(request):
     message = client.messages.create(
             body='Hello '+request['name']+' Your Secure Device OTP is - ' + str(otp),
             from_='+12055484688',
-            to=request["number"]
+            to='+91'+request["number"]
         )
 
     print(message.sid)
