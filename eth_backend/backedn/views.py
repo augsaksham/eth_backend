@@ -88,8 +88,56 @@ def update_record(request):
     else :
         return JsonResponse('Flase', status=201,safe=False)
 
+def convert_to_dict(inp):
+    i=0
+    while i<(len(inp)-1):
+        # if i>=100:
+        #     return inp
+        if(inp[i]=='{'):
+            # print("Found at 1 i = ",i)
+            # print("P1 = ",inp[0:i+1])
+            # print("P2 = ",inp[i+1:])
+            ip=inp[0:i+1]+"\""+inp[i+1:]
+            # print("Final Result = ************ = ",ip)
+            inp=ip
+            i+=1
+        elif (inp[i]==':'and not(inp[i-1]=="\"")):
+            print("Found at 2 i = ",i)
+            print("P1 = ",inp[0:i])
+            print("P2 = ",inp[i:])
+            ip=inp[0:i]+"\""+inp[i:]
+            print("Final Result = ************ = ",ip)
+            i+=1
+            inp=ip
+        elif (inp[i]==" " and not(inp[i+1]=='{')):
+            # print("Found at i 3 = ",i)
+            # print("P1 = ",inp[0:i+1])
+            # print("P2 = ",inp[i+1:])
+            ip=inp[0:i+1]+"\""+inp[i+1:]
+            # print("Final Result = ************ = ",ip)
+            i+=1
+            inp=ip
+        elif(inp[i]=="," ):
+            # print("Found at i 4 = ",i)
+            # print("P1 = ",inp[0:i])
+            # print("P2 = ",inp[i:])
+            ip=inp[0:i]+"\""+inp[i:]
+            # print("Final Result = ************ = ",ip)
+            i+=1
+            inp=ip
+        elif(inp[i]=="}" and not(inp[i-1]=="}") ):
+            # print("Found at i 5 = ",i)
+            # print("P1 = ",inp[0:i])
+            # print("P2 = ",inp[i:])
+            ip=inp[0:i]+"\""+inp[i:]
+            # print("Final Result = ************ = ",ip)
+            i+=1
+            inp=ip
+        i+=1
+    return inp
 
 def get_file(request,request_stat=0):
+    print("************** Got Request as ************* ",request)
     #Tested for use serialize json structure
     print("Got request with request state as ",request_stat)
     data={}
@@ -97,6 +145,12 @@ def get_file(request,request_stat=0):
         data = json.loads(request.body.decode("utf-8"))
     else:
         data=request
+    print("********** Got Data As ***************",data)
+    print("tyoe data = ",type(data))
+    if(str(type(data))=="<class 'str'>"):
+        print("Data is String converting to JSON")
+        data=json.loads(convert_to_dict(data))
+    
     patient_id=data["patient_id"]
     doc_id=data["doc_id"]
     file_id=data["file_id"]
